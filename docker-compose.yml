@@ -1,0 +1,46 @@
+version: '3'
+
+services:
+
+  cyclic_olefins_backend:
+    image: 'descriptor-backend:edge'
+    environment:
+      POSTGRES_SERVER: descriptor_database
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWD: "${POSTGRES_PASSWD:?is not set, expected from ../.env.secrets via the .env link in this folder}"
+      POSTGRES_DB: cyclic_olefins_data
+      API_PREFIX: cyclic-olefins
+    entrypoint: bash prestart.sh
+    networks:
+      - external_network
+      - descriptor-libraries-internal
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.descriptor_libraries-cyclic-olefins_backend.loadbalancer.server.port=8080
+      - "traefik.http.routers.descriptor_libraries-cyclic-olefins_backend.rule=(Host(`descriptor-libraries.molssi.org`) && PathPrefix(`/api/cyclic-olefins`))"
+      - traefik.http.routers.descriptor_libraries-cyclic-olefins_backend.entrypoints=websecure
+      - traefik.http.routers.descriptor_libraries-cyclic-olefins_backend.tls.certresolver=letsencrypt
+
+  cyclic_olefins_frontend:
+    image: 'descriptor-frontend:edges'
+    volumes:
+      - "./public:/app/public"
+    environment:
+      - VITE_BASE_URL=/cyclic-olefins
+    networks:
+      - external_network
+    entrypoint: ash renameBase.sh
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.descriptor_libraries-frontend-cyclic-olefins.rule=(Host(`descriptor-libraries.molssi.org`) && PathPrefix(`/cyclic-olefins`))"
+      - "traefik.http.services.descriptor_libraries-frontend-cyclic-olefins.loadbalancer.server.port=3000"
+      - traefik.http.routers.descriptor_libraries-frontend-cyclic-olefins.entrypoints=websecure
+      - traefik.http.routers.descriptor_libraries-frontend-cyclic-olefins.tls.certresolver=letsencrypt
+
+networks:
+  external_network:
+    # external = handled outside of this docker compose
+    name: docker_main_net
+    external: true
+  descriptor-libraries-internal:
+    external: true
