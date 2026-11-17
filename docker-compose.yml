@@ -3,7 +3,7 @@ version: '3'
 services:
 
   cyclic_olefins_backend:
-    image: 'descriptor-backend:edge'
+    image: "${BACKEND_IMAGE:?is not set; deploy with ../scripts/deploy-library.sh}"
     environment:
       POSTGRES_SERVER: descriptor_database
       POSTGRES_USER: postgres
@@ -22,7 +22,7 @@ services:
       - traefik.http.routers.descriptor_libraries-cyclic-olefins_backend.tls.certresolver=letsencrypt
 
   cyclic_olefins_frontend:
-    image: 'descriptor-frontend:edges'
+    image: "${FRONTEND_IMAGE:?is not set; deploy with ../scripts/deploy-library.sh}"
     volumes:
       - "./public:/app/public"
     environment:
